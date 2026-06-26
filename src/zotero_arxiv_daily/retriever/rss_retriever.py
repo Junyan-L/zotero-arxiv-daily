@@ -161,7 +161,11 @@ class RssRetriever(BaseRetriever):
             authors = ["Unknown"]
 
         # 获取摘要并清洗 HTML
-        abstract = raw_paper.get("summary", "")
+        # 优先尝试 dc:description (feedparser 解析为 dc_description)
+        # 因为在某些期刊中，description 仅包含期刊卷期信息，而真正的摘要在 dc:description 中
+        abstract = raw_paper.get("dc_description", "")
+        if not abstract:
+            abstract = raw_paper.get("summary", "")
         if not abstract:
             abstract = raw_paper.get("description", "")
         abstract = clean_html(abstract)

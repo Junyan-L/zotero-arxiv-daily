@@ -90,3 +90,23 @@ def test_rss_empty_urls(config):
     
     retriever = RssRetriever(config)
     assert retriever.urls == []
+
+
+def test_rss_convert_to_paper_with_dc_description(config):
+    with open_dict(config.source):
+        config.source.rss = {"urls": ["https://example.com/rss.xml"]}
+    
+    retriever = RssRetriever(config)
+    
+    # Verify dc_description is prioritized even if summary and description are present
+    raw_paper = {
+        "title": "A Paper with DC Description",
+        "author": "Dr. Jones",
+        "summary": "Volume 1, Issue 2 (Summary)",
+        "description": "Volume 1, Issue 2 (Description)",
+        "dc_description": "This is the actual paper abstract from Dublin Core.",
+        "link": "https://example.com/paper3"
+    }
+    
+    paper = retriever.convert_to_paper(raw_paper)
+    assert paper.abstract == "This is the actual paper abstract from Dublin Core."
