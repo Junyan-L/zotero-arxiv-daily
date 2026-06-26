@@ -9,6 +9,7 @@ from datetime import datetime
 from .reranker import get_reranker_cls
 from .construct_email import render_email
 from .utils import send_email
+from .retriever.rss_retriever import get_author_and_affiliation_from_doi
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -110,15 +111,40 @@ class Executor:
         if len(all_papers) > 0:
             logger.info("Reranking papers...")
             reranked_papers = self.reranker.rerank(all_papers, corpus)
+            
+            # 根据配置的相关性最小分数进行过滤
+            min_score = self.config.executor.get("min_score")
+            if min_score is not None:
+                logger.info(f"Filtering papers with relevance score >= {min_score}")
+                reranked_papers = [p for p in reranked_papers if p.score is not None and p.score >= min_score]
+
             reranked_papers = reranked_papers[:self.config.executor.max_paper_num]
-            logger.info("Generating TLDR and affiliations...")
+            logger.info("Generating TLDR, affiliations and fetching missing authors...")
             for p in tqdm(reranked_papers):
+                # 只有被最终保留的论文，如果作者或机构缺失，才发起 CrossRef DOI 在线查询一并补齐
+                if p.doi and (not p.authors or p.authors == ["Unknown"] or not p.affiliations):
+                    logger.info(f"Fetching metadata from CrossRef for '{p.title}' using DOI: {p.doi}")
+                    fetched_authors, fetched_affs = get_author_and_affiliation_from_doi(p.doi)
+                    if fetched_authors:
+                        p.authors = fetched_authors
+                    if fetched_affs and not p.affiliations:
+                        p.affiliations = fetched_affs
                 p.generate_tldr(self.openai_client, self.config.llm)
-                p.generate_affiliations(self.openai_client, self.config.llm)
+                if not p.affiliations:
+                    p.generate_affiliations(self.openai_client, self.config.llm)
         elif not self.config.executor.send_empty:
             logger.info("No new papers found. No email will be sent.")
             return
-        logger.info("Sending email...")
+        logger.info("Rendering email...")
         email_content = render_email(reranked_papers)
-        send_email(self.config, email_content)
-        logger.info("Email sent successfully")
+        
+        # 保存到本地文件便于测试预览
+        output_path = "output.html"
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(email_content)
+        logger.info(f"Email HTML content has been saved locally to: {output_path}")
+
+        # 临时注释掉实际的邮件发送，避免测试时产生真实发送
+        # logger.info("Sending email...")
+        # send_email(self.config, email_content)
+        # logger.info("Email sent successfully")

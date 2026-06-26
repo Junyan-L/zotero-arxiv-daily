@@ -35,8 +35,8 @@ def test_render_email_affiliation_truncation():
     affiliations = [f"Uni {i}" for i in range(8)]
     paper = make_sample_paper(affiliations=affiliations, score=7.0, tldr="ok")
     html = render_email([paper])
-    assert "Uni 0" in html
-    assert "Uni 4" in html
+    assert "[1] Uni 0" in html
+    assert "[5] Uni 4" in html
     assert "..." in html
     assert "Uni 7" not in html
 
@@ -44,7 +44,7 @@ def test_render_email_affiliation_truncation():
 def test_render_email_no_affiliations():
     paper = make_sample_paper(affiliations=None, score=7.0, tldr="ok")
     html = render_email([paper])
-    assert "Unknown Affiliation" in html
+    assert "Unknown Affiliation" not in html
 
 
 def test_get_stars_low_score():

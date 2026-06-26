@@ -52,7 +52,7 @@ def get_empty_html():
   """
   return block_template
 
-def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affiliations:str=None):
+def get_block_html(title:str, authors:str, rate:str, tldr:str, link_url:str, link_text:str, affiliations:str=None, doi:str=None):
     block_template = """
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-family: Arial, sans-serif; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
     <tr>
@@ -63,8 +63,8 @@ def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affi
     <tr>
         <td style="font-size: 14px; color: #666; padding: 8px 0;">
             {authors}
-            <br>
-            <i>{affiliations}</i>
+            {affiliations_section}
+            {doi_section}
         </td>
     </tr>
     <tr>
@@ -80,12 +80,14 @@ def get_block_html(title:str, authors:str, rate:str, tldr:str, pdf_url:str, affi
 
     <tr>
         <td style="padding: 8px 0;">
-            <a href="{pdf_url}" style="display: inline-block; text-decoration: none; font-size: 14px; font-weight: bold; color: #fff; background-color: #d9534f; padding: 8px 16px; border-radius: 4px;">PDF</a>
+            <a href="{link_url}" style="display: inline-block; text-decoration: none; font-size: 14px; font-weight: bold; color: #fff; background-color: #d9534f; padding: 8px 16px; border-radius: 4px;">{link_text}</a>
         </td>
     </tr>
 </table>
 """
-    return block_template.format(title=title, authors=authors,rate=rate, tldr=tldr, pdf_url=pdf_url, affiliations=affiliations)
+    affiliations_section = f"<br><i>{affiliations}</i>" if affiliations else ""
+    doi_section = f"<br><span style='font-size: 12px; color: #888;'><strong>DOI:</strong> <a href='https://doi.org/{doi}' target='_blank' style='color: #666; text-decoration: none;'>{doi}</a></span>" if doi else ""
+    return block_template.format(title=title, authors=authors,rate=rate, tldr=tldr, link_url=link_url, link_text=link_text, affiliations_section=affiliations_section, doi_section=doi_section)
 
 def get_stars(score:float):
     full_star = '<span class="full-star">⭐</span>'
@@ -118,14 +120,15 @@ def render_email(papers:list[Paper]) -> str:
             authors = ', '.join(author_list)
         else:
             authors = ', '.join(author_list[:3] + ['...'] + author_list[-2:])
-        if p.affiliations is not None:
-            affiliations = p.affiliations[:5]
-            affiliations = ', '.join(affiliations)
+        affiliations = None
+        if p.affiliations is not None and len(p.affiliations) > 0:
+            affs_indexed = [f"[{i+1}] {aff}" for i, aff in enumerate(p.affiliations[:5])]
+            affiliations = '; '.join(affs_indexed)
             if len(p.affiliations) > 5:
-                affiliations += ', ...'
-        else:
-            affiliations = 'Unknown Affiliation'
-        parts.append(get_block_html(p.title, authors, rate, p.tldr, p.pdf_url, affiliations))
+                affiliations += '; ...'
+        link_url = p.pdf_url if p.pdf_url else p.url
+        link_text = "PDF" if p.pdf_url else "Go to Paper"
+        parts.append(get_block_html(p.title, authors, rate, p.tldr, link_url, link_text, affiliations, p.doi))
 
     content = '<br>' + '</br><br>'.join(parts) + '</br>'
     return framework.replace('__CONTENT__', content)
