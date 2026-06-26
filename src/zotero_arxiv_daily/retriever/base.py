@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from omegaconf import DictConfig
-from ..protocol import Paper, RawPaperItem
+from ..protocol import Paper
 from tqdm import tqdm
-from typing import Type
+from typing import Type, Any
 from time import sleep
 from loguru import logger
 
@@ -14,11 +14,11 @@ class BaseRetriever(ABC):
         self.retriever_config = getattr(config.source,self.name)
 
     @abstractmethod
-    def _retrieve_raw_papers(self) -> list[RawPaperItem]:
+    def _retrieve_raw_papers(self) -> list[Any]:
         pass
 
     @abstractmethod
-    def convert_to_paper(self, raw_paper:RawPaperItem) -> Paper | None:
+    def convert_to_paper(self, raw_paper: Any) -> Paper | None:
         pass
 
     def retrieve_papers(self) -> list[Paper]:
