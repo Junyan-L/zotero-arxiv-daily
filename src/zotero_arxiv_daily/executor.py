@@ -144,6 +144,15 @@ class Executor:
             f.write(email_content)
         logger.info(f"Email HTML content has been saved locally to: {output_path}")
 
+        # 保存到本地 json 文件，便于 QQ 机器人读取并生成卡片信息
+        import json
+        from dataclasses import asdict
+        output_json_path = "output.json"
+        papers_dict_list = [asdict(p) for p in reranked_papers]
+        with open(output_json_path, "w", encoding="utf-8") as f:
+            json.dump(papers_dict_list, f, ensure_ascii=False, indent=2)
+        logger.info(f"Email JSON content has been saved locally to: {output_json_path}")
+
         # 临时注释掉实际的邮件发送，避免测试时产生真实发送
         # logger.info("Sending email...")
         # send_email(self.config, email_content)

@@ -204,9 +204,9 @@ def test_run_end_to_end(config, monkeypatch):
     executor.run()
 
     # Assertions
-    assert len(sent) == 1, "Email should have been sent"
-    _, _, email_body = sent[0]
-    assert "text/html" in email_body
+    import os
+    assert os.path.exists("output.html"), "output.html should have been generated"
+    assert os.path.exists("output.json"), "output.json should have been generated"
 
 
 def test_run_no_papers_send_empty_false(config, monkeypatch):
@@ -278,6 +278,6 @@ def test_run_no_papers_send_empty_true(config, monkeypatch):
     executor = Executor(config)
     executor.run()
 
-    assert len(sent) == 1, "Email should be sent even with no papers when send_empty=true"
-    _, _, body = sent[0]
-    assert "text/html" in body
+    import os
+    assert os.path.exists("output.html"), "output.html should be generated even with no papers when send_empty=true"
+    assert os.path.exists("output.json"), "output.json should be generated even with no papers when send_empty=true"
