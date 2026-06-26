@@ -110,3 +110,29 @@ def test_rss_convert_to_paper_with_dc_description(config):
     
     paper = retriever.convert_to_paper(raw_paper)
     assert paper.abstract == "This is the actual paper abstract from Dublin Core."
+
+
+def test_rss_convert_to_paper_with_content(config):
+    with open_dict(config.source):
+        config.source.rss = {"urls": ["https://example.com/rss.xml"]}
+    
+    retriever = RssRetriever(config)
+    
+    # Verify content list is prioritized even if summary/description/dc_description are present
+    raw_paper = {
+        "title": "A Paper with Content Field",
+        "author": "Dr. Miller",
+        "summary": "Volume 1, Issue 2 (Summary)",
+        "description": "Volume 1, Issue 2 (Description)",
+        "dc_description": "Dublin Core Description",
+        "content": [
+            {"type": "text/plain", "value": "Plain text content"},
+            {"type": "application/xhtml+xml", "value": "<h2>Html content</h2>"}
+        ],
+        "link": "https://example.com/paper4"
+    }
+    
+    paper = retriever.convert_to_paper(raw_paper)
+    # It should pick the application/xhtml+xml content and clean it
+    assert paper.abstract == "Html content"
+

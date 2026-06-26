@@ -161,9 +161,30 @@ class RssRetriever(BaseRetriever):
             authors = ["Unknown"]
 
         # 获取摘要并清洗 HTML
-        # 优先尝试 dc:description (feedparser 解析为 dc_description)
-        # 因为在某些期刊中，description 仅包含期刊卷期信息，而真正的摘要在 dc:description 中
-        abstract = raw_paper.get("dc_description", "")
+        # 优先尝试 content (有的期刊如 Wiley 的 RSS 中，真正摘要在 content 列表中)
+        abstract = ""
+        content_list = raw_paper.get("content", [])
+        if isinstance(content_list, list) and len(content_list) > 0:
+            # 优先选择 text/html 或 application/xhtml+xml，其次是 text/plain，或者直接取第一个
+            for c in content_list:
+                if isinstance(c, dict) and c.get("type") in ["text/html", "application/xhtml+xml"]:
+                    abstract = c.get("value", "")
+                    break
+            if not abstract:
+                for c in content_list:
+                    if isinstance(c, dict) and c.get("type") == "text/plain":
+                        abstract = c.get("value", "")
+                        break
+            if not abstract:
+                first_item = content_list[0]
+                if isinstance(first_item, dict):
+                    abstract = first_item.get("value", "")
+
+        # 如果 content 中没有提取到，再尝试其他字段
+        if not abstract:
+            # 优先尝试 dc:description (feedparser 解析为 dc_description)
+            # 因为在某些期刊中，description 仅包含期刊卷期信息，而真正的摘要在 dc:description 中
+            abstract = raw_paper.get("dc_description", "")
         if not abstract:
             abstract = raw_paper.get("summary", "")
         if not abstract:
