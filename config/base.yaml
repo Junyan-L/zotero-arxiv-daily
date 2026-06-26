@@ -52,3 +52,8 @@ executor:
   source: ??? # The sources of papers to retrieve. Example: ['arxiv','biorxiv','medrxiv']
   reranker: local # The reranker to use. Example: 'local' or 'api'
   min_score: null # Minimum relevance score required to display a paper. Example: 3.5
+
+deploy:
+  enabled: false               # Whether to run the deployment after main execution
+  cf_web_dir: "cf_web"         # Directory where html/json are copied for Cloudflare Pages
+  project_name: "paper"    # Wrangler pages project name

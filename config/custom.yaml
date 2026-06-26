@@ -24,3 +24,9 @@ source:
 executor:
   debug: ${oc.env:DEBUG,null}
   source: ['arxiv']
+
+deploy:
+  enabled: ${oc.env:DEPLOY_ENABLED,false}
+  cf_web_dir: "cf_web"
+  project_name: ${oc.env:CF_PROJECT_NAME,paper}
+

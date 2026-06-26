@@ -6,6 +6,7 @@ import hydra
 from loguru import logger
 import dotenv
 from zotero_arxiv_daily.executor import Executor
+from zotero_arxiv_daily.deploy import deploy_to_cloudflare
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 dotenv.load_dotenv()
 
@@ -30,6 +31,8 @@ def main(config:DictConfig):
     
     executor = Executor(config)
     executor.run()
+
+    deploy_to_cloudflare(config)
 
 if __name__ == '__main__':
     main()

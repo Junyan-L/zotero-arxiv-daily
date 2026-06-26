@@ -16,4 +16,14 @@ logs
 models
 test-compose.yml
 outputs
+*.db
+.astrbot/*
+.claude/*
+.vscode/*
+.wrangler/*
+.venv
+.astrbot
+data/*
+cf_web/*
+output*
 config/private.yaml
